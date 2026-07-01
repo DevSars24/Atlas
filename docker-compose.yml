@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: atlas-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: atlas
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d atlas"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: atlas-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: src/Atlas.Api/Dockerfile
+    container_name: atlas-api
+    ports:
+      - "5000:5000"
+    environment:
+      - DB_CONNECTION_STRING=Host=postgres;Database=atlas;Username=postgres;Password=postgres
+      - REDIS_CONNECTION_STRING=redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: src/Atlas.Worker/Dockerfile
+    container_name: atlas-worker
+    environment:
+      - DB_CONNECTION_STRING=Host=postgres;Database=atlas;Username=postgres;Password=postgres
+      - REDIS_CONNECTION_STRING=redis:6379
+      - CONCURRENCY_LIMIT=5
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

@@ -1,0 +1,21 @@
+## .NET build artifacts
+bin/
+obj/
+*.user
+
+## Test results
+[Tt]est[Rr]esult*/
+*.trx
+
+## Rider/VS
+.vs/
+.idea/
+*.suo
+
+## Docker
+docker-compose.override.yml
+
+## Environment secrets
+.env
+appsettings.Development.json
+appsettings.*.local.json
