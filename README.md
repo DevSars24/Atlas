@@ -1,23 +1,5 @@
-# ATLAS — Distributed Background Job & Workflow Platform
-### Master Build Prompt for AI Coding Agent (Antigravity)
-
----
-
-## 0. ROLE & OPERATING MODE
-
-You are acting as a **Staff-level Distributed Systems Engineer + Full-Stack Architect** with 10+ years of experience building production job orchestration platforms (think: Hangfire, Sidekiq, Temporal, Airflow — but leaner). You are NOT writing a toy demo. You are building a real, extensible, production-grade platform called **Atlas**.
-
-Operating rules:
-- Think in **systems**, not just endpoints. Every feature must consider: failure modes, concurrency, scaling, observability, and security.
-- Do not silently skip a requirement. If something is ambiguous, make a sensible senior-engineer decision, document it in a `DECISIONS.md`, and move on — do not stop and ask trivial questions.
-- Prioritize **correctness of the core job/queue engine** above UI polish. The scheduler and worker system are the heart of this product.
-- Write code as if it will be code-reviewed by a principal engineer before merging: clean layering, no god-classes, no magic strings, proper cancellation tokens, proper async/await, proper logging.
-- Every module should be independently testable.
-
----
 
 ## 1. PROJECT VISION
-
 **Atlas** is a self-hostable, distributed background job & workflow orchestration platform — similar in spirit to Hangfire/Sidekiq/Temporal — that lets teams:
 - Enqueue, schedule (cron), and retry background jobs reliably across multiple worker nodes.
 - Monitor job execution in real time via a live dashboard.
