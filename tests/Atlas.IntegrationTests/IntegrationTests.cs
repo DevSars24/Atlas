@@ -37,7 +37,8 @@ public class IntegrationTests : IClassFixture<IntegrationTestFixture>
         var jobsRepo = new JobRepository(dbContext);
         var workersRepo = new WorkerRepository(dbContext);
         var logsRepo = new JobLogRepository(dbContext);
-        var uow = new UnitOfWork(dbContext, jobsRepo, workersRepo, logsRepo);
+        var scheduledJobsRepo = new ScheduledJobRepository(dbContext);
+        var uow = new UnitOfWork(dbContext, jobsRepo, workersRepo, logsRepo, scheduledJobsRepo);
 
         var redisMultiplexer = ConnectionMultiplexer.Connect(_fixture.RedisConnectionString);
         var redisQueue = new RedisJobQueue(redisMultiplexer);
