@@ -1,8 +1,10 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Atlas.Api/Atlas.Api.csproj" />
+    <Project Path="src/Atlas.Cli/Atlas.Cli.csproj" />
     <Project Path="src/Atlas.Core/Atlas.Core.csproj" />
     <Project Path="src/Atlas.Infrastructure/Atlas.Infrastructure.csproj" />
+    <Project Path="src/Atlas.Scheduler/Atlas.Scheduler.csproj" />
     <Project Path="src/Atlas.Worker/Atlas.Worker.csproj" />
   </Folder>
   <Folder Name="/tests/">

@@ -88,3 +88,66 @@ RETURNING "Jobs".*;
 
 - In a containerized environment (like Docker Compose), this ensures that database schemas and indexes are automatically set up once the PostgreSQL container becomes healthy.
 - Eliminates manual DB migration steps for deployment or testing.
+
+---
+
+## 7. Cron Scheduler — Postgres Advisory Lock Leader Election (Phase 3)
+
+**Decision:** A single scheduler service uses `pg_try_advisory_lock(lockId)` to elect a leader across N replicas.
+
+- **Why not Zookeeper/etcd?** Atlas already depends on Postgres — using advisory locks adds zero new infrastructure.
+- **Session-level lock:** The lock is held for the duration of the DB connection. If the leader crashes, the lock is released automatically by Postgres on disconnect.
+- **Tick interval:** 30 seconds. Sub-minute cron expressions are possible but not recommended; 30s provides adequate resolution for `*/1 * * * *` schedules.
+- **Cronos library** evaluates standard 5-field cron expressions and computes `NextRunAt` for each schedule.
+
+---
+
+## 8. Authentication: Dual-Scheme (JWT + API Key) (Phase 4)
+
+**Decision:** Two authentication schemes are registered and combined with policy-based authorization.
+
+- **JWT (Bearer):** Used by the React dashboard. Users log in via `POST /api/auth/login`, receive a time-limited JWT signed with HMAC-SHA256.
+- **API Key (X-Api-Key header):** Used by CLI tools and external integrations. Keys are stored as bcrypt hashes — the raw key is shown once at creation and cannot be retrieved again.
+- **Policy-based roles:** `OperatorPlus` (Operator + Admin) protects mutating endpoints. `AdminOnly` protects key management. Read endpoints are open.
+- **SignalR token:** The JWT is passed via `?access_token=` query string for SignalR WebSocket upgrades (browsers can't set headers on WS connections).
+
+---
+
+## 9. SignalR Real-time Logs (Phase 5)
+
+**Decision:** `JobLogHub` uses group-scoped broadcasting (`job:{jobId}`) so clients only receive logs for jobs they're watching.
+
+- **Backplane:** For single-instance deployments, in-process SignalR is sufficient. For multi-instance, a Redis backplane can be added via `AddStackExchangeRedis()` — planned as a Phase 9 enhancement.
+- **Hybrid log view:** The `JobDetail` page shows historical logs from Postgres plus live streaming logs from SignalR in a unified view.
+
+---
+
+## 10. React Dashboard Architecture (Phase 6)
+
+**Decision:** Vite + React + TypeScript, served separately in development, built into `wwwroot` for production.
+
+- **Build output:** `vite build` writes to `src/Atlas.Api/wwwroot/` — the API serves it as static files. This means a single Docker image contains both API and Dashboard.
+- **API proxy:** In dev mode, Vite proxies `/api` and `/hubs` to `http://localhost:5000` so no CORS issues.
+- **Recharts** for metrics charts (lightweight, no extra dependencies).
+- **@microsoft/signalr** for live log streaming in `JobDetail`.
+
+---
+
+## 11. CLI Design (Phase 7)
+
+**Decision:** `System.CommandLine` for argument parsing + `Spectre.Console` for rich terminal output (tables, colors).
+
+- Config stored at `~/.atlas/config.json` — supports both API key and JWT token auth modes.
+- Output defaults to human-readable tables; `--json` flag enables machine-readable output for scripting.
+- Binary name is `atlas` (configured via `<AssemblyName>atlas</AssemblyName>` in csproj).
+
+---
+
+## 12. Prometheus Metrics (Phase 8)
+
+**Decision:** `prometheus-net.AspNetCore` exposes `/metrics` for Prometheus scraping.
+
+- Counters: `atlas_jobs_enqueued_total`, `atlas_jobs_succeeded_total`, `atlas_jobs_failed_total`
+- Gauges: `atlas_jobs_active`, `atlas_queue_depth`
+- Histogram: `atlas_job_duration_seconds` (per job type)
+- Grafana dashboards can be wired to these metrics for production observability.

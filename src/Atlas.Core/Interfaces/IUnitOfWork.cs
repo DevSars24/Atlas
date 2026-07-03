@@ -9,6 +9,7 @@ public interface IUnitOfWork : IDisposable
     IJobRepository Jobs { get; }
     IWorkerRepository Workers { get; }
     IJobLogRepository Logs { get; }
+    IScheduledJobRepository ScheduledJobs { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);
     Task CommitTransactionAsync(CancellationToken cancellationToken = default);

@@ -16,17 +16,20 @@ public class UnitOfWork : IUnitOfWork
         AtlasDbContext context,
         IJobRepository jobs,
         IWorkerRepository workers,
-        IJobLogRepository logs)
+        IJobLogRepository logs,
+        IScheduledJobRepository scheduledJobs)
     {
         _context = context;
         Jobs = jobs;
         Workers = workers;
         Logs = logs;
+        ScheduledJobs = scheduledJobs;
     }
 
     public IJobRepository Jobs { get; }
     public IWorkerRepository Workers { get; }
     public IJobLogRepository Logs { get; }
+    public IScheduledJobRepository ScheduledJobs { get; }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

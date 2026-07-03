@@ -1,9 +1,13 @@
 using Atlas.Core.Domain;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Atlas.Infrastructure.Data;
 
-public class AtlasDbContext : DbContext
+
+public class AtlasDbContext : IdentityDbContext<ApplicationUser>
+
 {
     public AtlasDbContext(DbContextOptions<AtlasDbContext> options) : base(options)
     {
@@ -16,6 +20,7 @@ public class AtlasDbContext : DbContext
     public DbSet<ScheduledJob> ScheduledJobs => Set<ScheduledJob>();
     public DbSet<WorkflowDefinition> WorkflowDefinitions => Set<WorkflowDefinition>();
     public DbSet<WorkflowRun> WorkflowRuns => Set<WorkflowRun>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,7 +40,7 @@ public class AtlasDbContext : DbContext
             // Unique constraint on IdempotencyKey
             entity.HasIndex(e => e.IdempotencyKey)
                 .IsUnique()
-                .HasFilter("\"IdempotencyKey\" IS NOT NULL"); // PostgreSQL syntax for partial unique index to allow multiple nulls
+                .HasFilter("\"IdempotencyKey\" IS NOT NULL");
 
             // Index for ClaimNextJobAsync
             entity.HasIndex(e => new { e.Queue, e.Status, e.Priority, e.ScheduledAt });
@@ -76,10 +81,12 @@ public class AtlasDbContext : DbContext
         modelBuilder.Entity<ScheduledJob>(entity =>
         {
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(250);
             entity.Property(e => e.CronExpression).IsRequired().HasMaxLength(250);
             entity.Property(e => e.JobType).IsRequired().HasMaxLength(250);
             entity.Property(e => e.Queue).IsRequired().HasMaxLength(250);
             entity.Property(e => e.Payload).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000);
         });
 
         // Workflow Configurations
@@ -100,6 +107,15 @@ public class AtlasDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.WorkflowDefinitionId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ApiKey Configurations
+        modelBuilder.Entity<ApiKey>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(250);
+            entity.Property(e => e.KeyHash).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.Role).IsRequired().HasMaxLength(50);
         });
     }
 }
